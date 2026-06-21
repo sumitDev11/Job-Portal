@@ -1,5 +1,5 @@
 import { Receiver } from "@upstash/qstash";
-import nodemailer from "nodemailer";
+import axios from "axios";
 import { Request, Response } from "express";
 
 const receiver = new Receiver({
@@ -21,30 +21,27 @@ export const sendMailHandler = async (req: Request, res: Response) => {
   try {
     const { to, subject, html } = JSON.parse(body);
 
-    const transporter = nodemailer.createTransport({
-      host: "smtp.gmail.com",
-      port: 465,
-      secure: true,
-      connectionTimeout: 10000,
-      greetingTimeout: 10000,
-      socketTimeout: 10000,
-      auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
+    await axios.post(
+      "https://api.resend.com/emails",
+      {
+        from: "HireHeaven <onboarding@resend.dev>",
+        to,
+        subject,
+        html,
       },
-    });
-
-    await transporter.sendMail({
-      from: "Hireheaven <no-reply>",
-      to,
-      subject,
-      html,
-    });
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        timeout: 10000,
+      }
+    );
 
     console.log(`Mail has been sent to ${to}`);
     res.json({ message: "Mail sent" });
-  } catch (error) {
-    console.log("Failed to send mail", error);
+  } catch (error: any) {
+    console.log("Failed to send mail", error?.response?.data || error.message);
     res.status(500).json({ message: "Failed to send mail" });
   }
 };

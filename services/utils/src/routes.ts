@@ -68,26 +68,42 @@ router.get("/download", async (req, res) => {
   }
 });
 
-import { GoogleGenAI } from "@google/genai";
+import axios from "axios";
 import dotenv from "dotenv";
 
 dotenv.config();
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY_GEMINI });
-
 const isOverloadedError = (error: any) => {
-  const text = `${error?.message || ""} ${error?.status || ""}`;
+  const text = `${error?.response?.data?.error?.message || error?.message || ""} ${error?.response?.status || ""}`;
   return /503|UNAVAILABLE|overloaded|high demand/i.test(text);
 };
 
+type GeminiContent = {
+  role?: string;
+  parts: Array<{ text?: string; inlineData?: { mimeType: string; data: string } }>;
+};
+
 const generateContentWithRetry = async (
-  params: Parameters<typeof ai.models.generateContent>[0],
+  params: { model: string; contents: string | GeminiContent[] },
   retries = 2,
   delayMs = 1500
-) => {
+): Promise<string> => {
+  const contents: GeminiContent[] =
+    typeof params.contents === "string"
+      ? [{ parts: [{ text: params.contents }] }]
+      : params.contents;
+
   for (let attempt = 0; attempt <= retries; attempt++) {
     try {
-      return await ai.models.generateContent(params);
+      const { data } = await axios.post(
+        `https://generativelanguage.googleapis.com/v1beta/models/${params.model}:generateContent?key=${process.env.API_KEY_GEMINI}`,
+        { contents }
+      );
+      const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (!text) {
+        throw new Error("Ai did not return a valid text response.");
+      }
+      return text;
     } catch (error: any) {
       const isLastAttempt = attempt === retries;
       if (!isOverloadedError(error) || isLastAttempt) {
@@ -152,7 +168,7 @@ Mastery', 'DevOps & Cloud').",
 } 
  `;
 
-    const response = await generateContentWithRetry({
+    const responseText = await generateContentWithRetry({
       model: "gemini-2.5-flash",
       contents: prompt,
     });
@@ -160,8 +176,8 @@ Mastery', 'DevOps & Cloud').",
     let jsonResponse;
 
     try {
-      const rawText = response.text
-        ?.replace(/```json/g, "")
+      const rawText = responseText
+        .replace(/```json/g, "")
         .replace(/```/g, "")
         .trim();
 
@@ -173,7 +189,7 @@ Mastery', 'DevOps & Cloud').",
     } catch (error) {
       return res.status(500).json({
         message: "Ai returned response that was not valid JSON",
-        rawResponse: response.text,
+        rawResponse: responseText,
       });
     }
 
@@ -241,7 +257,7 @@ The JSON object should have the following structure:
 Focus on: - File format and structure compatibility - Proper use of standard section headings - Keyword optimization - Formatting issues (tables, columns, graphics, special characters) - Contact information placement - Date formatting - Use of action verbs and quantifiable achievements - Section organization and flow 
 `;
 
-    const response = await generateContentWithRetry({
+    const responseText = await generateContentWithRetry({
       model: "gemini-2.5-flash",
       contents: [
         {
@@ -264,8 +280,8 @@ Focus on: - File format and structure compatibility - Proper use of standard sec
     let jsonResponse;
 
     try {
-      const rawText = response.text
-        ?.replace(/```json/g, "")
+      const rawText = responseText
+        .replace(/```json/g, "")
         .replace(/```/g, "")
         .trim();
 
@@ -277,7 +293,7 @@ Focus on: - File format and structure compatibility - Proper use of standard sec
     } catch (error) {
       return res.status(500).json({
         message: "Ai returned response that was not valid JSON",
-        rawResponse: response.text,
+        rawResponse: responseText,
       });
     }
 

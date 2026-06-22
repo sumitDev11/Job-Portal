@@ -20,6 +20,7 @@ export const sendMailHandler = async (req: Request, res: Response) => {
 
   try {
     const { to, subject, html } = JSON.parse(body);
+    console.log(`[mail] attempting to send to "${to}" subject "${subject}"`);
 
     await axios.post(
       "https://api.resend.com/emails",

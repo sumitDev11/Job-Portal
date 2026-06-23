@@ -5,10 +5,10 @@ import { Button } from "./ui/button";
 
 const Hero = () => {
   return (
-    <section className="relative overflow-hidden bg-secondary">
-      <div className="absolute inset-0 opacity-5">
-        <div className="absolute top-20 left-10 w-72 h-72 bg-blue-500 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-20 right-10 w-96 h-96  rounded-full blur-3xl"></div>
+    <section className="relative overflow-hidden bg-blue-50/60 dark:bg-slate-950 text-slate-900 dark:text-white">
+      <div className="absolute inset-0">
+        <div className="absolute -top-20 -left-20 w-96 h-96 bg-blue-300/30 dark:bg-blue-600/30 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-0 right-0 w-[28rem] h-[28rem] bg-indigo-300/30 dark:bg-indigo-500/20 rounded-full blur-3xl"></div>
       </div>
 
       <div className="container mx-auto px-5 py-16 md:py-24 relative">

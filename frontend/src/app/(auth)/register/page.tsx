@@ -184,20 +184,17 @@ const RegisterPage = () => {
                       <Label htmlFor="resume" className="text-sm font-medium">
                         Resume (PDF)
                       </Label>
-                      <div className="relative">
-                        <Lock className="icon-style" />
-                        <Input
-                          id="resume"
-                          type="file"
-                          accept="application/pdf"
-                          onChange={(e) => {
-                            if (e.target.files && e.target.files[0]) {
-                              setResume(e.target.files[0]);
-                            }
-                          }}
-                          className="h-11 cursor-pointer"
-                        />
-                      </div>
+                      <Input
+                        id="resume"
+                        type="file"
+                        accept="application/pdf"
+                        onChange={(e) => {
+                          if (e.target.files && e.target.files[0]) {
+                            setResume(e.target.files[0]);
+                          }
+                        }}
+                        className="h-11 cursor-pointer"
+                      />
                     </div>
 
                     <div className="space-y-2">

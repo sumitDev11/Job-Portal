@@ -19,8 +19,9 @@ export const TryCatch =
         });
       }
 
+      console.error(error);
       res.status(500).json({
-        message: error.message,
+        message: error.message || "Something went wrong",
       });
     }
   };

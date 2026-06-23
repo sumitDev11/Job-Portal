@@ -16,6 +16,8 @@ cloudinary.config({
 const app = express();
 app.use(cors());
 
+app.get("/", (req, res) => res.send("Utils service is running"));
+
 // Registered before express.json() because QStash signature verification needs the raw body
 app.post(
   "/api/utils/send-mail",

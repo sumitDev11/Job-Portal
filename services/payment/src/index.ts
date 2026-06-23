@@ -15,6 +15,7 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
+app.get("/", (req, res) => res.send("Payment service is running"));
 app.use("/api/payment", paymentRoutes);
 
 app.listen(process.env.PORT, () => {

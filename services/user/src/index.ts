@@ -9,6 +9,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+app.get("/", (req, res) => res.send("User service is running"));
 app.use("/api/user", userRoutes);
 
 app.listen(process.env.PORT, () => {

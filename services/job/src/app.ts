@@ -8,6 +8,7 @@ app.use(cors());
 
 app.use(express.json());
 
+app.get("/", (req, res) => res.send("Job service is running"));
 app.use("/api/job", jobRoutes);
 
 export default app;

@@ -23,16 +23,16 @@ export const sendMailHandler = async (req: Request, res: Response) => {
     console.log(`[mail] attempting to send to "${to}" subject "${subject}"`);
 
     await axios.post(
-      "https://api.resend.com/emails",
+      "https://api.brevo.com/v3/smtp/email",
       {
-        from: "HireHeaven <onboarding@resend.dev>",
-        to,
+        sender: { name: "HireHeaven", email: process.env.BREVO_SENDER_EMAIL },
+        to: [{ email: to }],
         subject,
-        html,
+        htmlContent: html,
       },
       {
         headers: {
-          Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+          "api-key": process.env.BREVO_API_KEY,
           "Content-Type": "application/json",
         },
         timeout: 10000,

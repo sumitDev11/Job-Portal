@@ -198,11 +198,17 @@ const JobsContent = () => {
                   id="location"
                   value={location}
                   onChange={(e) => setLocation(e.target.value)}
-                  className="w-full h-11 px-3 border-2 border-gray-300 rounded-md bg-transparent focus:outline-none focus:ring2"
+                  className="w-full h-11 px-3 border-2 border-gray-300 rounded-md bg-transparent text-foreground focus:outline-none focus:ring2"
                 >
-                  <option value="">All Locations</option>
+                  <option value="" className="bg-white text-black dark:bg-slate-900 dark:text-white">
+                    All Locations
+                  </option>
                   {locations.map((e) => (
-                    <option value={e} key={e}>
+                    <option
+                      value={e}
+                      key={e}
+                      className="bg-white text-black dark:bg-slate-900 dark:text-white"
+                    >
                       {e}
                     </option>
                   ))}

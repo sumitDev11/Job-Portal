@@ -61,7 +61,7 @@ router.get("/download", async (req, res) => {
 
     const buffer = Buffer.from(await response.arrayBuffer());
     res.setHeader("Content-Type", "application/pdf");
-    res.setHeader("Content-Disposition", 'attachment; filename="resume.pdf"');
+    res.setHeader("Content-Disposition", 'inline; filename="resume.pdf"');
     res.send(buffer);
   } catch (error: any) {
     res.status(500).json({ message: error.message });

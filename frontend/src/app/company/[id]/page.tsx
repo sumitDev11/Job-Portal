@@ -14,10 +14,10 @@ import {
   Building2,
   CheckCircle,
   Clock,
-  DollarSign,
   Eye,
   FileText,
   Globe,
+  IndianRupee,
   Laptop,
   MapPin,
   Pencil,
@@ -342,7 +342,7 @@ const CompanyPage = () => {
                           htmlFor="salary"
                           className="text-sm font-medium flex items-center gap-2"
                         >
-                          <DollarSign size={16} /> Salary
+                          <IndianRupee size={16} /> Salary
                         </Label>
                         <Input
                           id="salary"
@@ -494,7 +494,7 @@ const CompanyPage = () => {
                                 <span>{j.role}</span>
                               </div>
                               <div className="flex items-center gap-2 opacity-70">
-                                <DollarSign size={16} />
+                                <IndianRupee size={16} />
                                 <span>
                                   {j.salary
                                     ? `₹ ${j.salary.toLocaleString()}`
@@ -632,7 +632,7 @@ const CompanyPage = () => {
                     htmlFor="salary"
                     className="text-sm font-medium flex items-center gap-2"
                   >
-                    <DollarSign size={16} /> Salary
+                    <IndianRupee size={16} /> Salary
                   </Label>
                   <Input
                     id="salary"

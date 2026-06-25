@@ -36,16 +36,16 @@ It was built to answer a simple gap in most student/job-portal projects: job boa
 
 ## Live Demo
 
-> Update these once deployed — see [Deploying to Production](#deploying-to-production).
-
 | Service | URL |
 |---|---|
-| Frontend | `https://your-app.vercel.app` |
-| Auth API | `https://hireheaven-auth.onrender.com` |
-| User API | `https://hireheaven-user.onrender.com` |
-| Job API | `https://hireheaven-job.onrender.com` |
-| Payment API | `https://hireheaven-payment.onrender.com` |
-| Utils/AI API | `https://hireheaven-utils.onrender.com` |
+| Frontend | `https://hireheaven.vercel.app` |
+| Auth API | `https://hireheaven-auth-a8u9.onrender.com` |
+| User API | `https://hireheaven-user-9w5l.onrender.com` |
+| Job API | `https://hireheaven-job-cg8y.onrender.com` |
+| Payment API | `https://hireheaven-payment-d1i9.onrender.com` |
+| Utils/AI API | `https://hireheaven-utils-vs6p.onrender.com` |
+
+> Render free-tier services sleep after ~15 minutes idle and take 30–60s to wake on the first request — kept warm here via [UptimeRobot](https://uptimerobot.com) hitting each service's `/` health route every 5 minutes.
 
 ---
 
@@ -54,17 +54,17 @@ It was built to answer a simple gap in most student/job-portal projects: job boa
 ### 1. Job Board (Jobseekers + Recruiters)
 
 - Public job listing (`/jobs`) with **title search** and **location filter**.
-- Job detail page (`/jobs/[id]`) showing salary, location, openings, job type (Full-time/Part-time/Contract/Internship), and work mode (On-site/Remote/Hybrid).
+- Job detail page (`/jobs/[id]`) showing salary (₹), location, openings, job type (Full-time/Part-time/Contract/Internship), and work mode (On-site/Remote/Hybrid).
 - Recruiters can create a **company profile**, then post/edit/delete jobs under it from `/company/[id]`.
 - One-click **Apply** for jobseekers (uploads their stored resume + email as the application).
-- Recruiters review applicants per job and update each application's status (`Submitted` → `Hired`/`Rejected`), which triggers an automated status-update email to the applicant.
+- Recruiters review applicants per job, **view each resume inline in the browser** (not forced to download), and update each application's status (`Submitted` → `Hired`/`Rejected`), which triggers an automated status-update email to the applicant.
 
 ### 2. Authentication
 
 - Email/password registration with **role selection** at signup: `jobseeker` or `recruiter`.
 - Jobseekers can attach a resume (PDF) at registration time.
 - JWT-based session (15-day expiry), stored in a browser cookie, sent as `Authorization: Bearer <token>` on every authenticated request.
-- **Forgot/Reset password** flow: a time-limited reset link is emailed via an async pipeline (see [Async Messaging](#async-messaging-qstash-deep-dive)).
+- **Forgot/Reset password** flow: a time-limited reset link is emailed via an async pipeline (see [Async Messaging](#async-messaging-qstash-deep-dive)), linking back to the deployed frontend (not `localhost`).
 
 ### 3. AI Resume Analyzer (ATS Scoring)
 
@@ -75,7 +75,7 @@ Upload a PDF resume and get back, in seconds:
 - A list of **strengths** the resume already does well
 - A short plain-English **summary**
 
-The PDF is sent as inline base64 data directly to Gemini (`gemini-2.5-flash`) — no OCR or text-extraction step is needed; the model reads the PDF natively.
+The PDF is sent as inline base64 data directly to Gemini (`gemini-2.5-flash`) — no OCR or text-extraction step is needed; the model reads the PDF natively. Reachable both as a homepage section and its own dedicated page (`/resume-analyzer`), each able to trigger the same dialog via a shared custom window event.
 
 ### 4. AI Career Guidance
 
@@ -85,16 +85,18 @@ Enter your skills (e.g. `React, Node.js, PostgreSQL`) and receive:
 - A categorized **skills-to-learn roadmap** (e.g. "Deepen Your Existing Stack," "DevOps & Cloud") with the *why* and *how* for each skill
 - A **"How to Approach Learning"** action plan
 
+Reachable both as a homepage section and its own dedicated page (`/career-guide`), styled to match the resume analyzer.
+
 ### 5. Application Tracking
 
 - Jobseekers see every job they've applied to, with live status, on their account dashboard.
-- Recruiters see every applicant per job posting, with the ability to view resumes and change status inline.
+- Recruiters see every applicant per job posting, with the ability to view resumes inline and change status.
 - Status changes automatically fire a branded email notification to the applicant (success/rejection/pending) via the async mail pipeline.
 
 ### 6. Recruiter / Company Dashboard
 
-- `/account` adapts based on role: jobseekers see skills + applied jobs; recruiters see their company and posted jobs.
-- `/company/[id]` is the company's public + management page — recruiters get edit/delete controls on their own company's jobs; everyone else sees a read-only company profile.
+- `/account` adapts based on role: jobseekers see skills + applied jobs; recruiters see their company and posted jobs. The footer is hidden on this page to keep the dashboard focused.
+- `/company/[id]` is the company's public + management page — recruiters get edit/delete controls on their own company's jobs; everyone else sees a read-only company profile. Footer is hidden here too, along with on individual job detail pages, for the same reason.
 
 ### 7. Subscriptions & Payments
 
@@ -104,10 +106,10 @@ Enter your skills (e.g. `React, Node.js, PostgreSQL`) and receive:
 ### 8. Transactional Email
 
 Two automated emails, both rendered as branded HTML templates (blue/indigo theme matching the site):
-- **Password reset** — sent on `/forgot` request, expires in 15 minutes.
+- **Password reset** — sent on `/forgot` request, expires in 15 minutes, links to the live frontend URL.
 - **Application status update** — sent whenever a recruiter changes an applicant's status, with a color-coded status badge (green/red/blue).
 
-Delivery is fully asynchronous via Upstash QStash + Resend — see the [deep dive](#async-messaging-qstash-deep-dive) for why, and how this differs from a typical Kafka/SMTP setup.
+Delivery is fully asynchronous via **Upstash QStash + Brevo** — see the [deep dive](#async-messaging-qstash-deep-dive) for why, and how this differs from a typical Kafka/SMTP setup.
 
 ---
 
@@ -118,10 +120,10 @@ HireHeaven is split into **5 independent backend services** plus a Next.js front
 ```mermaid
 flowchart TB
     subgraph Client
-        FE["Next.js Frontend<br/>(App Router, React 19)"]
+        FE["Next.js Frontend<br/>(App Router, React 19)<br/>Vercel"]
     end
 
-    subgraph Services["Backend Microservices (Express + TypeScript)"]
+    subgraph Services["Backend Microservices (Express + TypeScript) — Render"]
         AUTH["Auth Service<br/>:5000<br/>register/login/reset"]
         USER["User Service<br/>:5002<br/>profile/skills/applications"]
         JOB["Job Service<br/>:5003<br/>companies/jobs/applications"]
@@ -134,7 +136,7 @@ flowchart TB
         CLOUD["Cloudinary<br/>(resumes, photos, logos)"]
         GEMINI["Google Gemini API<br/>(REST)"]
         QSTASH["Upstash QStash<br/>(async message delivery)"]
-        RESEND["Resend<br/>(email API)"]
+        BREVO["Brevo<br/>(email API)"]
         RAZORPAY["Razorpay<br/>(payments)"]
     end
 
@@ -147,10 +149,10 @@ flowchart TB
     AUTH -->|publish "send-mail"| QSTASH
     JOB -->|publish "send-mail"| QSTASH
     QSTASH -->|signed webhook| UTILS
-    UTILS -->|HTTPS API| RESEND
+    UTILS -->|HTTPS API| BREVO
 
     UTILS -->|REST call| GEMINI
-    UTILS -->|upload/delete| CLOUD
+    UTILS -->|upload/delete/download| CLOUD
     PAY -->|order/verify| RAZORPAY
 
     AUTH --> PG
@@ -167,6 +169,10 @@ Each service owns a distinct domain: **auth** owns identity, **user** owns profi
 
 This project originally used **Apache Kafka** for async email delivery (auth/job services publish a "send mail" event, a consumer service sends it). That's a textbook microservices pattern — but Kafka assumes a long-lived broker with real memory (1–2GB+), which free-tier hosting doesn't provide, and Upstash (the managed Kafka provider used here) discontinued Kafka for new accounts in 2025. The project was migrated to **Upstash QStash** — a serverless HTTP-based message queue — which keeps the same "publish an event, process it asynchronously, retry on failure" architecture without needing a persistent broker process. See [Async Messaging Deep Dive](#async-messaging-qstash-deep-dive) for the full mechanics.
 
+### Why Brevo instead of nodemailer/SMTP?
+
+`nodemailer` itself isn't the problem — it's just an SMTP client. The real constraint is that **Render's free tier blocks all outbound SMTP ports (25/465/587)**, so any SMTP-based mail setup times out (`ETIMEDOUT`) regardless of provider. The fix was switching to an **HTTP-based** email API — first Resend, then Brevo (Resend's sandbox sender can only deliver to the account owner's own email without a verified domain, which isn't viable for real users; Brevo allows unrestricted recipients after single-sender, not domain, verification — and it's free up to 300 emails/day).
+
 ---
 
 ## Tech Stack
@@ -181,9 +187,10 @@ This project originally used **Apache Kafka** for async email delivery (auth/job
 | File storage | Cloudinary (resumes, profile pictures, company logos) |
 | AI | Google Gemini (`gemini-2.5-flash`) via direct REST calls |
 | Async messaging | Upstash QStash (HTTP-based pub/sub with signed webhooks) |
-| Email delivery | Resend (HTTP email API) |
+| Email delivery | Brevo (HTTP email API) |
 | Payments | Razorpay |
-| Hosting (recommended) | Vercel (frontend) + Render (backend services) |
+| Hosting | Vercel (frontend) + Render (backend services) |
+| Uptime | UptimeRobot (5-min health checks to prevent Render cold sleep) |
 
 ---
 
@@ -213,8 +220,8 @@ job-portal/
 │       │   ├── payment/success/[id]/page.tsx
 │       │   ├── about/page.tsx
 │       │   └── page.tsx               # Landing page
-│       ├── components/                # Navbar, footer, hero, job-card, resume-analyser, carrer-guide, ui/...
-│       └── context/AppContext.tsx     # Global auth/user state + API base URLs
+│       ├── components/                # Navbar, footer, conditional-footer, hero, job-card, resume-analyser, carrer-guide, ui/...
+│       └── context/AppContext.tsx     # Global auth/user state + API base URLs (env-driven)
 │
 └── services/
     ├── auth/src/
@@ -234,6 +241,7 @@ job-portal/
     │   ├── controllers/job.ts         # companies, jobs, applications, status updates
     │   ├── producer.ts                 # QStash publisher (status-update emails)
     │   ├── tempelete.ts                 # Application-status email HTML
+    │   ├── utils/TryCatch.ts            # error wrapper (logs unexpected 500s)
     │   ├── routes/job.ts
     │   └── index.ts / app.ts
     │
@@ -243,8 +251,8 @@ job-portal/
     │   └── index.ts
     │
     └── utils/src/
-        ├── routes.ts                  # Cloudinary upload/delete/download, Gemini AI endpoints
-        ├── mailHandler.ts             # QStash signature verification + Resend send
+        ├── routes.ts                  # Cloudinary upload/delete/download (inline), Gemini AI endpoints
+        ├── mailHandler.ts             # QStash signature verification + Brevo send
         └── index.ts
 ```
 
@@ -333,7 +341,7 @@ erDiagram
 
 ## API Documentation
 
-All endpoints accept/return JSON unless noted. Protected endpoints require `Authorization: Bearer <jwt>`.
+All endpoints accept/return JSON unless noted. Protected endpoints require `Authorization: Bearer <jwt>`. Every service also exposes a plain `GET /` health-check route returning a short text status, used by UptimeRobot.
 
 ### Auth Service — `/api/auth`
 
@@ -387,10 +395,10 @@ All endpoints accept/return JSON unless noted. Protected endpoints require `Auth
 |---|---|---|---|
 | POST | `/upload` | — (internal) | `{ buffer, public_id? }` → uploads to Cloudinary, deletes old asset if `public_id` given |
 | POST | `/delete` | — (internal) | `{ public_id }` → deletes a Cloudinary asset |
-| GET | `/download` | — | `?url=` → proxies a file download (forces `Content-Disposition: attachment`) |
+| GET | `/download` | — | `?url=` → proxies a file, served with `Content-Disposition: inline` so PDFs open in-browser instead of forcing a download |
 | POST | `/career` | — | `{ skills }` → AI career guidance (see below) |
 | POST | `/resume-analyser` | — | `{ pdfBase64 }` → AI ATS resume analysis (see below) |
-| POST | `/send-mail` | QStash signature | Internal webhook — receives `{ to, subject, html }`, verifies the QStash signature, sends via Resend |
+| POST | `/send-mail` | QStash signature | Internal webhook — receives `{ to, subject, html }`, verifies the QStash signature, sends via Brevo |
 
 ---
 
@@ -460,7 +468,7 @@ sequenceDiagram
     participant Auth as Auth/Job Service
     participant Q as Upstash QStash
     participant Utils as Utils Service
-    participant R as Resend
+    participant B as Brevo
 
     Auth->>Q: publishJSON({url: UTILS_URL + "/api/utils/send-mail", body: {to, subject, html}})
     Q-->>Auth: 200 (queued)
@@ -470,12 +478,12 @@ sequenceDiagram
         Utils-->>Q: 401
         Q->>Utils: retries with backoff
     end
-    Utils->>R: POST https://api.resend.com/emails<br/>Authorization: Bearer RESEND_API_KEY
-    R-->>Utils: 200 { id }
+    Utils->>B: POST https://api.brevo.com/v3/smtp/email<br/>header: api-key
+    B-->>Utils: 200 { messageId }
     Utils-->>Q: 200 { message: "Mail sent" }
 ```
 
-**Why a queue at all, instead of just emailing synchronously inside the request?** Because the caller (e.g. `registerUser`/`forgotPassword`/`updateApplication`) shouldn't have to wait on a third-party mail API before responding to the user — and if Resend has a hiccup, QStash will keep retrying delivery on a backoff schedule instead of losing the email outright.
+**Why a queue at all, instead of just emailing synchronously inside the request?** Because the caller (e.g. `registerUser`/`forgotPassword`/`updateApplication`) shouldn't have to wait on a third-party mail API before responding to the user — and if Brevo has a hiccup, QStash will keep retrying delivery on a backoff schedule instead of losing the email outright.
 
 **The signature verification step matters**: `/api/utils/send-mail` is a public URL. Without `Receiver.verify()`, anyone could POST arbitrary `{to, subject, html}` and use this service as an open email relay. The route is deliberately registered with `express.raw()` **before** the global `express.json()` middleware in `index.ts`, because QStash signs the exact raw request body — if Express had already parsed and re-serialized it as JSON, the signature wouldn't match.
 
@@ -486,7 +494,7 @@ sequenceDiagram
 ### Prerequisites
 - Node.js 18+
 - A [Neon](https://neon.tech) Postgres database (free tier)
-- API keys for: [Google AI Studio](https://aistudio.google.com/apikey) (Gemini), [Upstash QStash](https://upstash.com) (messaging), [Resend](https://resend.com) (email), [Cloudinary](https://cloudinary.com), [Razorpay](https://razorpay.com) (test mode keys are fine)
+- API keys for: [Google AI Studio](https://aistudio.google.com/apikey) (Gemini), [Upstash QStash](https://upstash.com) (messaging), [Brevo](https://brevo.com) (email), [Cloudinary](https://cloudinary.com), [Razorpay](https://razorpay.com) (test mode keys are fine)
 
 ### 1. Clone and install
 
@@ -556,7 +564,8 @@ API_SECRET=<cloudinary api secret>
 API_KEY_GEMINI=<google ai studio key>
 QSTASH_CURRENT_SIGNING_KEY=<from upstash qstash dashboard>
 QSTASH_NEXT_SIGNING_KEY=<from upstash qstash dashboard>
-RESEND_API_KEY=<from resend dashboard>
+BREVO_API_KEY=<from brevo dashboard>
+BREVO_SENDER_EMAIL=<your brevo-verified sender email>
 ```
 
 **`frontend/.env.local`** (optional — defaults to localhost if omitted)
@@ -569,6 +578,8 @@ NEXT_PUBLIC_UTILS_SERVICE=http://localhost:5001
 ```
 
 > ⚠️ **Note on QStash locally**: QStash is a cloud service — it cannot deliver webhooks to `localhost`. Forgot-password and application-status emails will not actually send while running fully locally unless you expose your local `utils` service via a tunnel (e.g. `ngrok`) and point `UPLOAD_SERVICE` at that public tunnel URL. Every other feature (job board, auth, AI endpoints, payments) works fully offline/locally.
+
+> ⚠️ **`UPLOAD_SERVICE` must point at the `utils` service**, not at the service's own URL — every service that calls Cloudinary or sends mail (`auth`, `user`, `job`) does so by calling `${UPLOAD_SERVICE}/api/utils/...`. Pointing it at the wrong service (e.g. a service pointing at itself) is a real mistake this project hit in production and breaks uploads/email silently.
 
 ### 3. Run everything
 
@@ -600,7 +611,8 @@ This project is designed to run entirely on **free tiers**:
 | 5 backend services | **Render** (free Web Services) | Keeps Node processes alive (vs. serverless functions, which can't run a persistent consumer); one free instance per service |
 | Messaging | **Upstash QStash** | Replaces Kafka; serverless, free tier |
 | Database | **Neon** | Serverless Postgres, generous free tier |
-| Email | **Resend** | HTTP API — works around Render's free-tier SMTP port block |
+| Email | **Brevo** | HTTP API — works around Render's free-tier SMTP port block; no domain verification required |
+| Uptime | **UptimeRobot** | Free 5-minute HTTP checks keep Render instances from cold-sleeping |
 
 ### Steps
 
@@ -610,19 +622,20 @@ This project is designed to run entirely on **free tiers**:
    - Build Command: `npm install && tsc`
    - Start Command: `node dist/index.js`
    - Paste that service's `.env` contents into the dashboard's Environment tab
-   - After all 5 are deployed, **update `UPLOAD_SERVICE`** on `auth`, `user`, and `job` to the real deployed `utils` URL (not `localhost`)
-3. **Vercel** — import the `frontend` folder, set the `NEXT_PUBLIC_*_SERVICE` env vars to your real Render URLs.
-4. **Keep Render awake** — free instances sleep after ~15 minutes idle. Add a free [UptimeRobot](https://uptimerobot.com) monitor per service (5-minute interval) to keep them warm, especially the `utils` service (its QStash webhook needs to be reachable instantly).
-5. **Resend sandbox limit** — without a verified domain, Resend's default `onboarding@resend.dev` sender can only deliver to the email address you signed up to Resend with. For production use with real users, verify your own domain at `resend.com/domains` and update the `from` address in `services/utils/src/mailHandler.ts`.
+   - After all 5 are deployed, **update `UPLOAD_SERVICE`** on `auth`, `user`, and `job` to the real deployed `utils` URL (not `localhost`, and not the service's own URL)
+   - Update `Frontend_Url` on `auth` to the real deployed Vercel URL (used in password-reset email links)
+3. **Vercel** — import the `frontend` folder (Root Directory: `frontend`), set the `NEXT_PUBLIC_*_SERVICE` env vars to your real Render URLs, then redeploy.
+4. **Keep Render awake** — free instances sleep after ~15 minutes idle. Add a free [UptimeRobot](https://uptimerobot.com) HTTP monitor per service (5-minute interval) pointed at each service's root `/` health route, especially the `utils` service (its QStash webhook needs to be reachable instantly).
+5. **Brevo sender verification** — Brevo requires verifying the single sender email address (not a full domain) before it will deliver mail; do this once in the Brevo dashboard and set `BREVO_SENDER_EMAIL` to that address.
 
 ---
 
 ## Known Limitations
 
-- **Render free tier cold starts**: the first request after ~15 minutes of inactivity can take 30–60 seconds.
-- **Resend sandbox restriction**: until a custom domain is verified, transactional emails can only be delivered to the Resend account owner's own email address.
+- **Render free tier cold starts**: the first request after ~15 minutes of inactivity can take 30–60 seconds (mitigated by UptimeRobot, but not eliminated for cross-service calls).
 - **No automated test suite** — this is a project built iteratively; correctness is currently verified via manual/live endpoint testing rather than CI.
 - **Single shared Postgres instance** across services — fine at this scale, but a true microservices setup would give each service its own database.
+- **Brevo free tier cap** — 300 emails/day; sufficient for a portfolio/demo project, not production scale.
 
 ## Roadmap
 

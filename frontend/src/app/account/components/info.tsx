@@ -191,7 +191,7 @@ const Info: React.FC<AccontProps> = ({ user, isYourAccount }) => {
               <Mail size={20} className="text-blue-600" />
               Contact Information
             </h2>
-            <div className="grid md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="flex items-center gap-3 p-4 rounded-lg border hover:border-blue-500 transition-colors">
                 <div className="h-10 w-10 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
                   <Mail size={18} className="text-blue-600" />
